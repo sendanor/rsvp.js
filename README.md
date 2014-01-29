@@ -38,7 +38,9 @@ section below on TaskJS for more information.
 ### Basic Usage
 
 ```javascript
-var promise = new RSVP.Promise(function(resolve, reject){
+var RSVP = require('rsvp');
+
+var promise = new RSVP.Promise(function(resolve, reject) {
   // succeed
   resolve(value);
   // or reject
@@ -166,10 +168,13 @@ within your promises. These callback functions can be anything, but a common
 practice is to call `console.assert` to dump the error to the console.
 
 ```javascript
-RSVP.on('error', function(event) {
-  console.assert(false, event.detail);
+RSVP.on('error', function(reason) {
+  console.assert(false, reason);
 });
 ```
+
+**NOTE:** promises do allow for errors to be handled asynchronously, so
+this callback may result in false positives.
 
 **NOTE:** Usage of `RSVP.configure('onerror', yourCustomFunction);` is
 deprecated in favor of using `RSVP.on`.
@@ -184,7 +189,7 @@ is rejected.
 
 ```javascript
 var promises = [2, 3, 5, 7, 11, 13].map(function(id){
-  return getJSON("/post/" + id + ".json";
+  return getJSON("/post/" + id + ".json");
 });
 
 RSVP.all(promises).then(function(posts) {
@@ -239,12 +244,24 @@ one of the following formats:
 
 ## Deferred
 
-RSVP also has a RSVP.defer() method that returns a deferred object of the form 
-`{ promise, resolve(x), reject(r) }`. This creates a deferred object without 
-specifying how it will be resolved. However, the `RSVP.Promise` constructor is 
-generally a better and less error-prone choice; we recommend using it in 
-preference to `RSVP.defer()`.
+> The `RSVP.Promise` constructor is generally a better, less error-prone choice
+> than `RSVP.defer()`. Promises are recommended unless the specific 
+> properties of deferred are needed.
 
+Sometimes one need to create a deferred object, without immediately specifying
+how it will be resolved. These deferred objects are essentially a wrapper around
+a promise, whilst providing late access to the `resolve()` and `reject()` methods.
+
+A deferred object has this form: `{ promise, resolve(x), reject(r) }`.
+
+```javascript
+var deferred = new RSVP.defer();
+// ...
+deferred.promise // access the promise
+// ...
+deferred.resolve();
+
+```
 
 ## TaskJS
 
