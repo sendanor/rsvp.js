@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 /**
   `RSVP.rethrow` will rethrow an error on the next turn of the JavaScript event
   loop in order to aid debugging.
@@ -39,9 +39,9 @@
   @throws Error
   @static
 */
-exports["default"] = function rethrow(reason) {
-  setTimeout(function() {
+exports['default'] = function rethrow(reason) {
+    setTimeout(function () {
+        throw reason;
+    });
     throw reason;
-  });
-  throw reason;
 };

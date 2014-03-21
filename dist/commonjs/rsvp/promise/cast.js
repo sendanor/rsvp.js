@@ -1,5 +1,7 @@
-"use strict";
+'use strict';
 /**
+  @deprecated
+
   `RSVP.Promise.cast` coerces its argument to a promise, or returns the
   argument if it is already a promise which shares a constructor with the caster.
 
@@ -65,15 +67,13 @@
   Useful for tooling.
   @return {Promise} promise
 */
-exports["default"] = function cast(object, label) {
-  /*jshint validthis:true */
-  var Constructor = this;
-
-  if (object && typeof object === 'object' && object.constructor === Constructor) {
-    return object;
-  }
-
-  return new Constructor(function(resolve) {
-    resolve(object);
-  }, label);
+exports['default'] = function cast(object, label) {
+    /*jshint validthis:true */
+    var Constructor = this;
+    if (object && typeof object === 'object' && object.constructor === Constructor) {
+        return object;
+    }
+    return new Constructor(function (resolve) {
+        resolve(object);
+    }, label);
 };

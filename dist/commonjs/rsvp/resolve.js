@@ -1,5 +1,5 @@
-"use strict";
-var Promise = require("./promise")["default"];
+'use strict';
+var Promise = require('./promise')['default'];
 /**
   This is a convenient alias for `RSVP.Promise.resolve`.
 
@@ -12,6 +12,6 @@ var Promise = require("./promise")["default"];
   @return {Promise} a promise that will become fulfilled with the given
   `value`
 */
-exports["default"] = function resolve(value, label) {
-  return Promise.resolve(value, label);
+exports['default'] = function resolve(value, label) {
+    return Promise.resolve(value, label);
 };

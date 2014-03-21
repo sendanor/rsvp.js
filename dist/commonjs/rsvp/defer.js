@@ -1,6 +1,5 @@
-"use strict";
-var Promise = require("./promise")["default"];
-
+'use strict';
+var Promise = require('./promise')['default'];
 /**
   `RSVP.defer` returns an object similar to jQuery's `$.Deferred`.
   `RSVP.defer` should be used when porting over code reliant on `$.Deferred`'s
@@ -33,14 +32,11 @@ var Promise = require("./promise")["default"];
   Useful for tooling.
   @return {Object}
  */
-
-exports["default"] = function defer(label) {
-  var deferred = { };
-
-  deferred.promise = new Promise(function(resolve, reject) {
-    deferred.resolve = resolve;
-    deferred.reject = reject;
-  }, label);
-
-  return deferred;
+exports['default'] = function defer(label) {
+    var deferred = {};
+    deferred.promise = new Promise(function (resolve, reject) {
+        deferred.resolve = resolve;
+        deferred.reject = reject;
+    }, label);
+    return deferred;
 };

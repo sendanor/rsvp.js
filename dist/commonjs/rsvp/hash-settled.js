@@ -1,8 +1,7 @@
-"use strict";
-var Promise = require("./promise")["default"];
-var isNonThenable = require("./utils").isNonThenable;
-var keysOf = require("./utils").keysOf;
-
+'use strict';
+var Promise = require('./promise')['default'];
+var isMaybeThenable = require('./utils').isMaybeThenable;
+var keysOf = require('./utils').keysOf;
 /**
   `RSVP.hashSettled` is similar to `RSVP.allSettled`, but takes an object
   instead of an array for its `promises` argument.
@@ -104,55 +103,52 @@ var keysOf = require("./utils").keysOf;
   have been settled.
   @static
 */
-exports["default"] = function hashSettled(object, label) {
-  return new Promise(function(resolve, reject){
-    var results = {};
-    var keys = keysOf(object);
-    var remaining = keys.length;
-    var entry, property;
-
-    if (remaining === 0) {
-      resolve(results);
-      return;
-    }
-
-    function fulfilledResolver(property) {
-      return function(value) {
-        resolveAll(property, fulfilled(value));
-      };
-    }
-
-    function rejectedResolver(property) {
-      return function(reason) {
-        resolveAll(property, rejected(reason));
-      };
-    }
-
-    function resolveAll(property, value) {
-      results[property] = value;
-      if (--remaining === 0) {
-        resolve(results);
-      }
-    }
-
-    for (var i = 0; i < keys.length; i++) {
-      property = keys[i];
-      entry = object[property];
-
-      if (isNonThenable(entry)) {
-        resolveAll(property, fulfilled(entry));
-      } else {
-        Promise.cast(entry).then(fulfilledResolver(property), rejectedResolver(property));
-      }
-    }
-  });
+exports['default'] = function hashSettled(object, label) {
+    return new Promise(function (resolve, reject) {
+        var results = {};
+        var keys = keysOf(object);
+        var remaining = keys.length;
+        var entry, property;
+        if (remaining === 0) {
+            resolve(results);
+            return;
+        }
+        function fulfilledResolver(property$2) {
+            return function (value) {
+                resolveAll(property$2, fulfilled(value));
+            };
+        }
+        function rejectedResolver(property$2) {
+            return function (reason) {
+                resolveAll(property$2, rejected(reason));
+            };
+        }
+        function resolveAll(property$2, value) {
+            results[property$2] = value;
+            if (--remaining === 0) {
+                resolve(results);
+            }
+        }
+        for (var i = 0; i < keys.length; i++) {
+            property = keys[i];
+            entry = object[property];
+            if (isMaybeThenable(entry)) {
+                Promise.resolve(entry).then(fulfilledResolver(property), rejectedResolver(property));
+            } else {
+                resolveAll(property, fulfilled(entry));
+            }
+        }
+    });
 };
-
 function fulfilled(value) {
-  return { state: 'fulfilled', value: value };
+    return {
+        state: 'fulfilled',
+        value: value
+    };
 }
-
-
 function rejected(reason) {
-  return { state: 'rejected', reason: reason };
+    return {
+        state: 'rejected',
+        reason: reason
+    };
 }

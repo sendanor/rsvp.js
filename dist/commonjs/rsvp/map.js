@@ -1,9 +1,7 @@
-"use strict";
-var Promise = require("./promise")["default"];
-var all = require("./all")["default"];
-var isArray = require("./utils").isArray;
-var isFunction = require("./utils").isFunction;
-
+'use strict';
+var Promise = require('./promise')['default'];
+var isArray = require('./utils').isArray;
+var isFunction = require('./utils').isFunction;
 /**
  `RSVP.map` is similar to JavaScript's native `map` method, except that it
   waits for all promises to become fulfilled before running the `mapFn` on
@@ -82,25 +80,16 @@ var isFunction = require("./utils").isFunction;
    The promise will be rejected if any of the given `promises` become rejected.
   @static
 */
-exports["default"] = function map(promises, mapFn, label) {
-  return all(promises, label).then(function(results){
-    if (!isArray(promises)) {
-      throw new TypeError('You must pass an array to map.');
-    }
-
-    if (!isFunction(mapFn)){
-      throw new TypeError("You must pass a function to map's second argument.");
-    }
-
-
-    var resultLen = results.length,
-        mappedResults = [],
-        i;
-
-    for (i = 0; i < resultLen; i++){
-      mappedResults.push(mapFn(results[i]));
-    }
-
-    return all(mappedResults, label);
-  });
+exports['default'] = function map(promises, mapFn, label) {
+    return Promise.all(promises, label).then(function (values) {
+        if (!isFunction(mapFn)) {
+            throw new TypeError('You must pass a function as map\'s second argument.');
+        }
+        var length = values.length;
+        var results = new Array(length);
+        for (var i = 0; i < length; i++) {
+            results[i] = mapFn(values[i]);
+        }
+        return Promise.all(results, label);
+    });
 };

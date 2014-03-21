@@ -1,20 +1,7 @@
-"use strict";
-var Promise = require("./promise")["default"];
-
-var slice = Array.prototype.slice;
-
-function makeNodeCallbackFor(resolve, reject) {
-  return function (error, value) {
-    if (error) {
-      reject(error);
-    } else if (arguments.length > 2) {
-      resolve(slice.call(arguments, 1));
-    } else {
-      resolve(value);
-    }
-  };
-}
-
+'use strict';
+/* global  arraySlice */
+var Promise = require('./promise')['default'];
+var isArray = require('./utils').isArray;
 /**
   `RSVP.denodeify` takes a "node-style" function and returns a function that
   will return an `RSVP.Promise`. You can use `denodeify` in Node.js or the
@@ -34,10 +21,65 @@ function makeNodeCallbackFor(resolve, reject) {
 
   ```javascript
   var fs = require('fs');
-
   var readFile = RSVP.denodeify(fs.readFile);
 
   readFile('myfile.txt').then(handleData, handleError);
+  ```
+
+  If the node function has multiple success parameters, then `denodeify`
+  just returns the first one:
+
+  ```javascript
+  var request = RSVP.denodeify(require('request'));
+
+  request('http://example.com').then(function(res) {
+    // ...
+  });
+  ```
+
+  However, if you need all success parameters, setting `denodeify`'s
+  second parameter to `true` causes it to return all success parameters
+  as an array:
+
+  ```javascript
+  var request = RSVP.denodeify(require('request'), true);
+
+  request('http://example.com').then(function(result) {
+    // result[0] -> res
+    // result[1] -> body
+  });
+  ```
+
+  Or if you pass it an array with names it returns the parameters as a hash:
+
+  ```javascript
+  var request = RSVP.denodeify(require('request'), ['res', 'body']);
+
+  request('http://example.com').then(function(result) {
+    // result.res
+    // result.body
+  });
+  ```
+
+  Sometimes you need to retain the `this`:
+
+  ```javascript
+  var app = require('express')();
+  var render = RSVP.denodeify(app.render.bind(app));
+  ```
+
+  The denodified function inherits from the original function. It works in all
+  environments, except IE 10 and below. Consequently all properties of the original
+  function are available to you. However, any properties you change on the
+  denodeified function won't be changed on the original function. Example:
+
+  ```javascript
+  var request = RSVP.denodeify(require('request')),
+      cookieJar = request.jar(); // <- Inheritance is used here
+
+  request('http://example.com', {jar: cookieJar}).then(function(res) {
+    // cookieJar.cookies holds now the cookies returned by example.com
+  });
   ```
 
   Using `denodeify` makes it easier to compose asynchronous operations instead
@@ -45,36 +87,29 @@ function makeNodeCallbackFor(resolve, reject) {
 
   ```javascript
   var fs = require('fs');
-  var log = require('some-async-logger');
 
   fs.readFile('myfile.txt', function(err, data){
-    if (err) return handleError(err);
+    if (err) { ... } // Handle error
     fs.writeFile('myfile2.txt', data, function(err){
-      if (err) throw err;
-      log('success', function(err) {
-        if (err) throw err;
-      });
+      if (err) { ... } // Handle error
+      console.log('done')
     });
   });
   ```
 
-  You can chain the operations together using `then` from the returned promise:
+  you can chain the operations together using `then` from the returned promise:
 
   ```javascript
   var fs = require('fs');
-  var denodeify = RSVP.denodeify;
-  var readFile = denodeify(fs.readFile);
-  var writeFile = denodeify(fs.writeFile);
-  var log = denodeify(require('some-async-logger'));
+  var readFile = RSVP.denodeify(fs.readFile);
+  var writeFile = RSVP.denodeify(fs.writeFile);
 
   readFile('myfile.txt').then(function(data){
     return writeFile('myfile2.txt', data);
   }).then(function(){
-    return log('SUCCESS');
-  }).then(function(){
-    // success handler
-  }, function(reason){
-    // rejection handler
+    console.log('done')
+  }).catch(function(error){
+    // Handle error
   });
   ```
 
@@ -85,26 +120,68 @@ function makeNodeCallbackFor(resolve, reject) {
   its last argument. The callback expects an error to be passed as its first
   argument (if an error occurred, otherwise null), and the value from the
   operation as its second argument ("function(err, value){ }").
-  @param {Any} binding optional argument for binding the "this" value when
-  calling the `nodeFunc` function.
+  @param {Boolean|Array} argumentNames An optional paramter that if set
+  to `true` causes the promise to fulfill with the callback's success arguments
+  as an array. This is useful if the node function has multiple success
+  paramters. If you set this paramter to an array with names, the promise will
+  fulfill with a hash with these names as keys and the success parameters as
+  values.
   @return {Function} a function that wraps `nodeFunc` to return an
   `RSVP.Promise`
   @static
 */
-exports["default"] = function denodeify(nodeFunc, binding) {
-  return function()  {
-    var nodeArgs = slice.call(arguments), resolve, reject;
-    var thisArg = this || binding;
-
-    return new Promise(function(resolve, reject) {
-      Promise.all(nodeArgs).then(function(nodeArgs) {
-        try {
-          nodeArgs.push(makeNodeCallbackFor(resolve, reject));
-          nodeFunc.apply(thisArg, nodeArgs);
-        } catch(e) {
-          reject(e);
+exports['default'] = function denodeify(nodeFunc, argumentNames) {
+    var asArray = argumentNames === true;
+    var asHash = isArray(argumentNames);
+    function denodeifiedFunction() {
+        var length = arguments.length;
+        var nodeArgs = new Array(length);
+        for (var i = 0; i < length; i++) {
+            nodeArgs[i] = arguments[i];
         }
-      });
-    });
-  };
+        var thisArg;
+        if (!asArray && !asHash && argumentNames) {
+            console.warn('Deprecation: RSVP.denodeify() doesn\'t allow setting the ' + '"this" binding anymore. Use yourFunction.bind(yourThis) instead.');
+            thisArg = argumentNames;
+        } else {
+            thisArg = this;
+        }
+        return Promise.all(nodeArgs).then(function (nodeArgs$2) {
+            return new Promise(resolver);
+            // sweet.js has a bug, this resolver can't be defined in the constructor
+            // or the arraySlice macro doesn't work
+            function resolver(resolve, reject) {
+                function callback() {
+                    var length$2 = arguments.length;
+                    var args = new Array(length$2);
+                    for (var i$2 = 0; i$2 < length$2; i$2++) {
+                        args[i$2] = arguments[i$2];
+                    }
+                    var error = args[0];
+                    var value = args[1];
+                    if (error) {
+                        reject(error);
+                    } else if (asArray) {
+                        resolve(args.slice(1));
+                    } else if (asHash) {
+                        var obj = {};
+                        var successArguments = args.slice(1);
+                        var name;
+                        var i$3;
+                        for (i$3 = 0; i$3 < argumentNames.length; i$3++) {
+                            name = argumentNames[i$3];
+                            obj[name] = successArguments[i$3];
+                        }
+                        resolve(obj);
+                    } else {
+                        resolve(value);
+                    }
+                }
+                nodeArgs$2.push(callback);
+                nodeFunc.apply(thisArg, nodeArgs$2);
+            }
+        });
+    }
+    denodeifiedFunction.__proto__ = nodeFunc;
+    return denodeifiedFunction;
 };

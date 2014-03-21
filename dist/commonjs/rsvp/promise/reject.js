@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 /**
   `RSVP.Promise.reject` returns a promise rejected with the passed `reason`.
   It is shorthand for the following:
@@ -34,11 +34,10 @@
   Useful for tooling.
   @return {Promise} a promise rejected with the given `reason`.
 */
-exports["default"] = function reject(reason, label) {
-  /*jshint validthis:true */
-  var Constructor = this;
-
-  return new Constructor(function (resolve, reject) {
-    reject(reason);
-  }, label);
+exports['default'] = function reject(reason, label) {
+    /*jshint validthis:true */
+    var Constructor = this;
+    return new Constructor(function (resolve, reject) {
+        reject(reason);
+    }, label);
 };

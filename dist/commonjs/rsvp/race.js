@@ -1,5 +1,5 @@
-"use strict";
-var Promise = require("./promise")["default"];
+'use strict';
+var Promise = require('./promise')['default'];
 /**
   This is a convenient alias for `RSVP.Promise.race`.
 
@@ -10,6 +10,6 @@ var Promise = require("./promise")["default"];
   @param {String} label An optional label. This is useful
   for tooling.
  */
-exports["default"] = function race(array, label) {
-  return Promise.race(array, label);
+exports['default'] = function race(array, label) {
+    return Promise.race(array, label);
 };

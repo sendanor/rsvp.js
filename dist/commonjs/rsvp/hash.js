@@ -1,8 +1,7 @@
-"use strict";
-var Promise = require("./promise")["default"];
-var isNonThenable = require("./utils").isNonThenable;
-var keysOf = require("./utils").keysOf;
-
+'use strict';
+var Promise = require('./promise')['default'];
+var isMaybeThenable = require('./utils').isMaybeThenable;
+var keysOf = require('./utils').keysOf;
 /**
   `RSVP.hash` is similar to `RSVP.all`, but takes an object instead of an array
   for its `promises` argument.
@@ -91,44 +90,39 @@ var keysOf = require("./utils").keysOf;
   @return {Promise} promise that is fulfilled when all properties of `promises`
   have been fulfilled, or rejected if any of them become rejected.
 */
-exports["default"] = function hash(object, label) {
-  return new Promise(function(resolve, reject){
-    var results = {};
-    var keys = keysOf(object);
-    var remaining = keys.length;
-    var entry, property;
-
-    if (remaining === 0) {
-      resolve(results);
-      return;
-    }
-
-   function fulfilledTo(property) {
-      return function(value) {
-        results[property] = value;
-        if (--remaining === 0) {
-          resolve(results);
+exports['default'] = function hash(object, label) {
+    return new Promise(function (resolve, reject) {
+        var results = {};
+        var keys = keysOf(object);
+        var remaining = keys.length;
+        var entry, property;
+        if (remaining === 0) {
+            resolve(results);
+            return;
         }
-      };
-    }
-
-    function onRejection(reason) {
-      remaining = 0;
-      reject(reason);
-    }
-
-    for (var i = 0; i < keys.length; i++) {
-      property = keys[i];
-      entry = object[property];
-
-      if (isNonThenable(entry)) {
-        results[property] = entry;
-        if (--remaining === 0) {
-          resolve(results);
+        function fulfilledTo(property$2) {
+            return function (value) {
+                results[property$2] = value;
+                if (--remaining === 0) {
+                    resolve(results);
+                }
+            };
         }
-      } else {
-        Promise.cast(entry).then(fulfilledTo(property), onRejection);
-      }
-    }
-  });
+        function onRejection(reason) {
+            remaining = 0;
+            reject(reason);
+        }
+        for (var i = 0; i < keys.length; i++) {
+            property = keys[i];
+            entry = object[property];
+            if (isMaybeThenable(entry)) {
+                Promise.resolve(entry).then(fulfilledTo(property), onRejection);
+            } else {
+                results[property] = entry;
+                if (--remaining === 0) {
+                    resolve(results);
+                }
+            }
+        }
+    });
 };

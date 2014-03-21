@@ -1,6 +1,5 @@
-"use strict";
-var Promise = require("./promise")["default"];
-
+'use strict';
+var Promise = require('./promise')['default'];
 /**
   This is a convenient alias for `RSVP.Promise.reject`.
 
@@ -12,6 +11,6 @@ var Promise = require("./promise")["default"];
   Useful for tooling.
   @return {Promise} a promise rejected with the given `reason`.
 */
-exports["default"] = function reject(reason, label) {
-  return Promise.reject(reason, label);
+exports['default'] = function reject(reason, label) {
+    return Promise.reject(reason, label);
 };

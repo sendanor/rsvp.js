@@ -1,10 +1,8 @@
-"use strict";
+'use strict';
 /* global toString */
-
-var isArray = require("../utils").isArray;
-var isFunction = require("../utils").isFunction;
-var isNonThenable = require("../utils").isNonThenable;
-
+var isArray = require('../utils').isArray;
+var isFunction = require('../utils').isFunction;
+var isMaybeThenable = require('../utils').isMaybeThenable;
 /**
   `RSVP.Promise.race` returns a new promise which is settled in the same way as the
   first passed promise to settle.
@@ -71,29 +69,35 @@ var isNonThenable = require("../utils").isNonThenable;
   @return {Promise} a promise which settles in the same way as the first passed
   promise to settle.
 */
-exports["default"] = function race(entries, label) {
-  /*jshint validthis:true */
-  var Constructor = this, entry;
-
-  return new Constructor(function(resolve, reject) {
-    if (!isArray(entries)) {
-      throw new TypeError('You must pass an array to race.');
-    }
-
-    var pending = true;
-
-    function onFulfillment(value) { if (pending) { pending = false; resolve(value); } }
-    function onRejection(reason)  { if (pending) { pending = false; reject(reason); } }
-
-    for (var i = 0; i < entries.length; i++) {
-      entry = entries[i];
-      if (isNonThenable(entry)) {
-        pending = false;
-        resolve(entry);
-        return;
-      } else {
-        Constructor.cast(entry).then(onFulfillment, onRejection);
-      }
-    }
-  }, label);
+exports['default'] = function race(entries, label) {
+    /*jshint validthis:true */
+    var Constructor = this, entry;
+    return new Constructor(function (resolve, reject) {
+        if (!isArray(entries)) {
+            throw new TypeError('You must pass an array to race.');
+        }
+        var pending = true;
+        function onFulfillment(value) {
+            if (pending) {
+                pending = false;
+                resolve(value);
+            }
+        }
+        function onRejection(reason) {
+            if (pending) {
+                pending = false;
+                reject(reason);
+            }
+        }
+        for (var i = 0; i < entries.length; i++) {
+            entry = entries[i];
+            if (isMaybeThenable(entry)) {
+                Constructor.resolve(entry).then(onFulfillment, onRejection);
+            } else {
+                pending = false;
+                resolve(entry);
+                return;
+            }
+        }
+    }, label);
 };

@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 /**
   `RSVP.Promise.resolve` returns a promise that will become resolved with the
   passed `value`. It is shorthand for the following:
@@ -31,11 +31,13 @@
   @return {Promise} a promise that will become fulfilled with the given
   `value`
 */
-exports["default"] = function resolve(value, label) {
-  /*jshint validthis:true */
-  var Constructor = this;
-
-  return new Constructor(function(resolve, reject) {
-    resolve(value);
-  }, label);
+exports['default'] = function resolve(object, label) {
+    /*jshint validthis:true */
+    var Constructor = this;
+    if (object && typeof object === 'object' && object.constructor === Constructor) {
+        return object;
+    }
+    return new Constructor(function (resolve) {
+        resolve(object);
+    }, label);
 };

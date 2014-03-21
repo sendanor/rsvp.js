@@ -1,7 +1,6 @@
-"use strict";
-var isArray = require("../utils").isArray;
-var isNonThenable = require("../utils").isNonThenable;
-
+'use strict';
+var isArray = require('../utils').isArray;
+var isMaybeThenable = require('../utils').isMaybeThenable;
 /**
   `RSVP.Promise.all` accepts an array of promises, and returns a new promise which
   is fulfilled with an array of fulfillment values for the passed promises, or
@@ -49,49 +48,42 @@ var isNonThenable = require("../utils").isNonThenable;
   fulfilled, or rejected if any of them become rejected.
   @static
 */
-exports["default"] = function all(entries, label) {
-
-  /*jshint validthis:true */
-  var Constructor = this;
-
-  return new Constructor(function(resolve, reject) {
-    if (!isArray(entries)) {
-      throw new TypeError('You must pass an array to all.');
-    }
-
-    var remaining = entries.length;
-    var results = new Array(remaining);
-    var entry, pending = true;
-
-    if (remaining === 0) {
-      resolve(results);
-      return;
-    }
-
-    function fulfillmentAt(index) {
-      return function(value) {
-        results[index] = value;
-        if (--remaining === 0) {
-          resolve(results);
+exports['default'] = function all(entries, label) {
+    /*jshint validthis:true */
+    var Constructor = this;
+    return new Constructor(function (resolve, reject) {
+        if (!isArray(entries)) {
+            throw new TypeError('You must pass an array to all.');
         }
-      };
-    }
-
-    function onRejection(reason) {
-      remaining = 0;
-      reject(reason);
-    }
-
-    for (var index = 0; index < entries.length; index++) {
-      entry = entries[index];
-      if (isNonThenable(entry)) {
-        results[index] = entry;
-        if (--remaining === 0) {
-          resolve(results);
+        var remaining = entries.length;
+        var results = new Array(remaining);
+        var entry, pending = true;
+        if (remaining === 0) {
+            resolve(results);
+            return;
         }
-      } else {
-        Constructor.cast(entry).then(fulfillmentAt(index), onRejection);
-      }
-    }
-  }, label);
+        function fulfillmentAt(index$2) {
+            return function (value) {
+                results[index$2] = value;
+                if (--remaining === 0) {
+                    resolve(results);
+                }
+            };
+        }
+        function onRejection(reason) {
+            remaining = 0;
+            reject(reason);
+        }
+        for (var index = 0; index < entries.length; index++) {
+            entry = entries[index];
+            if (isMaybeThenable(entry)) {
+                Constructor.resolve(entry).then(fulfillmentAt(index), onRejection);
+            } else {
+                results[index] = entry;
+                if (--remaining === 0) {
+                    resolve(results);
+                }
+            }
+        }
+    }, label);
 };

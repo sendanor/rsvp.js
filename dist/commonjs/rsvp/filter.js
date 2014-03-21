@@ -1,9 +1,7 @@
-"use strict";
-var all = require("./all")["default"];
-var map = require("./map")["default"];
-var isFunction = require("./utils").isFunction;
-var isArray = require("./utils").isArray;
-
+'use strict';
+var Promise = require('./promise')['default'];
+var isFunction = require('./utils').isFunction;
+var isMaybeThenable = require('./utils').isMaybeThenable;
 /**
  `RSVP.filter` is similar to JavaScript's native `filter` method, except that it
   waits for all promises to become fulfilled before running the `filterFn` on
@@ -18,6 +16,8 @@ var isArray = require("./utils").isArray;
   var promise1 = RSVP.resolve(1);
   var promise2 = RSVP.resolve(2);
   var promise3 = RSVP.resolve(3);
+
+  var promises = [promise1, promise2, promise3];
 
   var filterFn = function(item){
     return item > 1;
@@ -87,27 +87,27 @@ var isArray = require("./utils").isArray;
   tooling.
   @return {Promise}
 */
-function filter(promises, filterFn, label) {
-  return all(promises, label).then(function(values){
-    if (!isArray(promises)) {
-      throw new TypeError('You must pass an array to filter.');
-    }
-
-    if (!isFunction(filterFn)){
-      throw new TypeError("You must pass a function to filter's second argument.");
-    }
-
-    return map(promises, filterFn, label).then(function(filterResults){
-       var i,
-           valuesLen = values.length,
-           filtered = [];
-
-       for (i = 0; i < valuesLen; i++){
-         if(filterResults[i]) filtered.push(values[i]);
-       }
-       return filtered;
+exports['default'] = function filter(promises, filterFn, label) {
+    return Promise.all(promises, label).then(function (values) {
+        if (!isFunction(filterFn)) {
+            throw new TypeError('You must pass a function as filter\'s second argument.');
+        }
+        var length = values.length;
+        var filtered = new Array(length);
+        for (var i = 0; i < length; i++) {
+            filtered[i] = filterFn(values[i]);
+        }
+        return Promise.all(filtered, label).then(function (filtered$2) {
+            var results = new Array(length);
+            var newLength = 0;
+            for (var i$2 = 0; i$2 < length; i$2++) {
+                if (filtered$2[i$2]) {
+                    results[newLength] = values[i$2];
+                    newLength++;
+                }
+            }
+            results.length = newLength;
+            return results;
+        });
     });
-  });
-}
-
-exports["default"] = filter;
+};

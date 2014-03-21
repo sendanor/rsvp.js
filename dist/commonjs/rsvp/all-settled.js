@@ -1,8 +1,7 @@
-"use strict";
-var Promise = require("./promise")["default"];
-var isArray = require("./utils").isArray;
-var isNonThenable = require("./utils").isNonThenable;
-
+'use strict';
+var Promise = require('./promise')['default'];
+var isArray = require('./utils').isArray;
+var isMaybeThenable = require('./utils').isMaybeThenable;
 /**
   `RSVP.allSettled` is similar to `RSVP.all`, but instead of implementing
   a fail-fast method, it waits until all the promises have returned and
@@ -54,58 +53,53 @@ var isNonThenable = require("./utils").isNonThenable;
   @return {Promise} promise that is fulfilled with an array of the settled
   states of the constituent promises.
 */
-
-exports["default"] = function allSettled(entries, label) {
-  return new Promise(function(resolve, reject) {
-    if (!isArray(entries)) {
-      throw new TypeError('You must pass an array to allSettled.');
-    }
-
-    var remaining = entries.length;
-    var entry;
-
-    if (remaining === 0) {
-      resolve([]);
-      return;
-    }
-
-    var results = new Array(remaining);
-
-    function fulfilledResolver(index) {
-      return function(value) {
-        resolveAll(index, fulfilled(value));
-      };
-    }
-
-    function rejectedResolver(index) {
-      return function(reason) {
-        resolveAll(index, rejected(reason));
-      };
-    }
-
-    function resolveAll(index, value) {
-      results[index] = value;
-      if (--remaining === 0) {
-        resolve(results);
-      }
-    }
-
-    for (var index = 0; index < entries.length; index++) {
-      entry = entries[index];
-
-      if (isNonThenable(entry)) {
-        resolveAll(index, fulfilled(entry));
-      } else {
-        Promise.cast(entry).then(fulfilledResolver(index), rejectedResolver(index));
-      }
-    }
-  }, label);
+exports['default'] = function allSettled(entries, label) {
+    return new Promise(function (resolve, reject) {
+        if (!isArray(entries)) {
+            throw new TypeError('You must pass an array to allSettled.');
+        }
+        var remaining = entries.length;
+        var entry;
+        if (remaining === 0) {
+            resolve([]);
+            return;
+        }
+        var results = new Array(remaining);
+        function fulfilledResolver(index$2) {
+            return function (value) {
+                resolveAll(index$2, fulfilled(value));
+            };
+        }
+        function rejectedResolver(index$2) {
+            return function (reason) {
+                resolveAll(index$2, rejected(reason));
+            };
+        }
+        function resolveAll(index$2, value) {
+            results[index$2] = value;
+            if (--remaining === 0) {
+                resolve(results);
+            }
+        }
+        for (var index = 0; index < entries.length; index++) {
+            entry = entries[index];
+            if (isMaybeThenable(entry)) {
+                Promise.resolve(entry).then(fulfilledResolver(index), rejectedResolver(index));
+            } else {
+                resolveAll(index, fulfilled(entry));
+            }
+        }
+    }, label);
 };
-
 function fulfilled(value) {
-  return { state: 'fulfilled', value: value };
+    return {
+        state: 'fulfilled',
+        value: value
+    };
 }
-
 function rejected(reason) {
-  return { state: 'rejected', reason: reason };
+    return {
+        state: 'rejected',
+        reason: reason
+    };
 }
