@@ -1,5 +1,4 @@
 module.exports = function(grunt) {
-  require('load-grunt-tasks')(grunt);
   var config = require('load-grunt-config')(grunt, {
     configPath: 'tasks/options',
     init: false
@@ -36,6 +35,7 @@ module.exports = function(grunt) {
     'clean',
     'transpile:amd',
     'transpile:commonjs',
+    'sweetjs',
     'concat:amd',
     'concat:browser',
     'browser:distNoVersion',
@@ -65,6 +65,7 @@ module.exports = function(grunt) {
     'clean:build',
     'transpile:amd',
     'transpile:commonjs',
+    'sweetjs',
     'concat:browser',
     'browser:distNoVersion',
     'concat:amdNoVersion',

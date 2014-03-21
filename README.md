@@ -13,6 +13,9 @@ It works in node and the browser.
 
 ## Promises
 
+
+Although RSVP is es6 compliant, it does bring along some extra toys. If you would prefer a strict es6 subset, I would suggest checking out our sibling project https://github.com/jakearchibald/es6-promise, It is RSVP but stripped down to the es6 spec features.
+
 ## Bower
 
 `bower install -S rsvp`
@@ -255,7 +258,7 @@ a promise, whilst providing late access to the `resolve()` and `reject()` method
 A deferred object has this form: `{ promise, resolve(x), reject(r) }`.
 
 ```javascript
-var deferred = new RSVP.defer();
+var deferred = RSVP.defer();
 // ...
 deferred.promise // access the promise
 // ...
